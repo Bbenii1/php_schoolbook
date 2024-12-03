@@ -5,7 +5,3 @@
 session_start();
 require_once "classroom-functions.php";
 require_once "classroom-html.php";
-
-function getData(){
-    return DATA;
-}

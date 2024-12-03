@@ -1,9 +1,9 @@
 html, body {
-    background-color: #E5E9EC;
-    padding: 0;
+    /*background-color: #E5E9EC;*/
     margin: 0;
     font-family: Arial, sans-serif;
-    padding-bottom: 20px;
+    padding: 0 0 20px;
+    user-select: none;
 }
 
 a{
@@ -30,7 +30,7 @@ nav {
     box-shadow: 0 5px 5px rgba(0, 0, 0, 0.1);
 }
 
-button {
+button, input {
     padding: 16px;
     height: 50px;
     margin: 0;
@@ -50,21 +50,18 @@ form {
     display: inline-table;
 }
 
-.osztaly {
-    text-transform: uppercase;
-}
-
 table{
-    margin: 1rem auto 1rem auto;   
-    border: 1px black solid;
+    margin: 1rem auto 1rem auto;
     border-collapse: collapse;
     text-transform: capitalize;
+    border: 1px #ccc solid;
+    overflow: hidden;
 }
 
 td{
+    border: 1px #ccc solid;
     padding: 8px;
     text-align: center;
-    border-left: black 1px solid;
     width: 110px;
 }
 
@@ -78,22 +75,18 @@ th {
 }
 
 tr {
-    border-bottom: 1px solid #b1b1b1;
-}
-
-tr:last-child {
-    border-bottom: 1px solid black;
-}
-
-tr:nth-child(odd){
-    background-color: #fff;
+    transition: .2s cubic-bezier(0.2, 0.8, 0.25, 1);
 }
 
 tr:nth-child(even) {
     background-color: #ECEFF2;
 }
 
-tr:hover {
+.osztaly {
+    text-transform: uppercase !important;
+}
+
+.classTable tr:hover {
     background-color: #A5D6A7;
 }
 
@@ -108,7 +101,7 @@ td span {
 footer {
     line-height: 25px;
     height: 25px;
-    bottom: 0px;
+    bottom: 0;
     padding-left: 1rem;
     background-color: #406A7C;
     color: white;
@@ -135,6 +128,90 @@ footer {
 .popup.error {
     background-color: #dc3545;
 }
+
+.querymenu {
+    display: flex;
+    width: 500px;
+    justify-content: center;
+    margin-left: calc(50vw - 250px);
+}
+
+.queryButton {
+    display: flex;
+    width: 400px;
+    justify-content: center;
+    margin-left: calc(50vw - 200px);
+}
+
+.queryButton > a:last-child > button{
+    border-bottom-right-radius: 8px;
+}
+
+.queryButton > a:first-child > button{
+    border-bottom-left-radius: 8px;
+}
+
+.querymenu a button{
+    padding: 20px 30px;
+    height: fit-content;
+    transition: .2s cubic-bezier(0.2, 0.8, 0.25, 1);
+    background-color: #335765;
+}
+
+.querymenu button:hover {
+    background-color: #518094;
+}
+
+.querymenu > a:first-child > button{
+    border-bottom-left-radius: 8px;
+}
+
+.querymenu > a:last-child > button{
+    border-bottom-right-radius: 8px;
+}
+
+
+.avgQueryTable th{
+    text-transform: capitalize;
+}
+
+.avgQueryTable tr td:nth-child(1){
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.avgQueryTable tr:not(:last-child):hover {
+    background-color: #A5D6A7;
+}
+
+.avgQueryTable tr:last-child td:not(:first-child),
+.avgQueryTable tr:not(:first-child) td:last-child{
+    color: #ff0000;
+}
+
+.subjectQueryTable tr td:first-child{
+    text-align: center;
+}
+.subjectQueryTable th {
+    text-transform: capitalize;
+}
+
+.subjectQueryTable th {
+    width: fit-content;
+}
+
+.subjectQueryTable tr:nth-child(2),
+.subjectQueryTable tr:nth-child(3),
+.subjectQueryTable tr:nth-child(4){
+    background-color: rgba(155, 255, 110, 0.5);
+}
+
+.subjectQueryTable tr:nth-last-child(1),
+.subjectQueryTable tr:nth-last-child(2),
+.subjectQueryTable tr:nth-last-child(3){
+    background-color: rgba(255, 110, 110, 0.5);
+}
+
 
 @keyframes showAndHide {
     0% {
