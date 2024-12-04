@@ -3,8 +3,6 @@
  * @author Szlonkai Benedek
  */
 
-use JetBrains\PhpStorm\NoReturn;
-
 include ('classroom-data.php');
 
 //create schoolbook in session if it doesn't exist
@@ -57,7 +55,7 @@ function generateMarks(): void{
         for ($i = 0; $i < count($_SESSION['schoolbook'][$class]); $i++){
             $avgs = [];
             for ($s = 0; $s < count(DATA['subjects']); $s++){
-                $count = rand(1, 5);
+                $count = rand(0, 5);
                 $marks = [];
                 $avg = 0;
                 for ($k = 0; $k < $count; $k++){
@@ -77,11 +75,11 @@ function generateMarks(): void{
 }
 
 //create folder, filename
-#[NoReturn] function SaveToFile(): void
+function SaveToFile(): void
 {
     // Check if it's a query result or a class save
     $isQuery = $_GET['query'] ?? null;
-    $class = $_SESSION['CurrentClass'] == 'all' ? null : $_SESSION['CurrentClass'];
+    $class = $_SESSION['CurrentClass'] == 'all' ? 'all' : $_SESSION['CurrentClass'];
 
     // Create "export" folder if it doesn't exist
     if (!is_dir("export")) {
@@ -90,7 +88,11 @@ function generateMarks(): void{
 
     // Generate filename based on context
     if ($isQuery) {
-        $filename = "query_{$isQuery}_" . date('Y-m-d_Hi') . ".csv";
+        if ($_GET['query'] == 'ranking') {
+            $filename = "{$class}_query_{$isQuery}" . date('Y-m-d_Hi') . ".csv";
+        }else{
+            $filename = "query_{$isQuery}" . date('Y-m-d_Hi') . ".csv";
+        }
     } else {
         $filename = ($class == null) ? "all_" . date('Y-m-d_Hi') . ".csv" : $class . "_" . date('Y-m-d_Hi') . ".csv";
     }
@@ -117,7 +119,6 @@ function generateMarks(): void{
     header("Location: index.php?status=success&file=$filename");
     exit;
 }
-
 
 //save data to file (.csv)
 function DataToSave($filename, $class=null): void{
@@ -161,7 +162,7 @@ function DataToSave($filename, $class=null): void{
 }
 
 //display class tables on html page
-function displayInTable(mixed $class, $classStudents): void
+function displayInTable($class, $classStudents): void
 {
     echo "<table class='classTable'><th>$class</th>";
     foreach (DATA['subjects'] as $subject) {
@@ -259,41 +260,45 @@ function displayAvgQuery($classAverage, $overallAvg, $overallSubjectAvg): void
 function rankStudents(bool $schoolWide = false): array
 {
     $subjectRankings = []; // class => subject => index => name, average
-    $overallAverages = []; // name => averages
-    $studentClasses = [];  // name => class
+    $overallAverages = []; // name_class => averages
 
     foreach (DATA['classes'] as $class) {
         foreach (DATA['subjects'] as $subject) {
             foreach ($_SESSION['schoolbook'][$class] as $student) {
+                // Generate unique key for each student using their name and class to prevent duplication issues
+                $uniqueKey = $student[0] . '_' . $class;
+
                 $subjectAvg = count($student[$subject]) > 0 ? (array_sum($student[$subject]) / count($student[$subject])) : 0;
 
-                // Tantárgyhoz tartozó átlag hozzáadása
+                // Add subject average to the rankings
                 $subjectRankings[$class][$subject][] = [
                     'name' => $student[0],
                     'class' => $class,
                     'average' => number_format($subjectAvg, 1)
                 ];
 
-                // Összátlag számításához szükséges adatok gyűjtése
-                $overallAverages[$student[0]][] = $subjectAvg;
-                $studentClasses[$student[0]] = $class;
-
+                // Store overall averages
+                $overallAverages[$uniqueKey][] = $subjectAvg;
             }
 
-            // Tantárgyi sorrend osztályonként
+            // Sort rankings by subject average within the class
             usort($subjectRankings[$class][$subject], fn($a, $b) => $b['average'] <=> $a['average']);
         }
     }
-    // Összátlag kiszámítása diákonként
-    $finalOverallRankings = [];
 
-    foreach ($overallAverages as $name => $averages) {
+    // Compute overall averages for each unique student
+    $finalOverallRankings = [];
+    foreach ($overallAverages as $uniqueKey => $averages) {
+        // Extract student name and class from the unique key
+        [$name, $class] = explode('_', $uniqueKey);
+
         $finalOverallRankings[] = [
             'name' => $name,
-            'class' => $studentClasses[$name],
-            'overallAverage' => number_format(array_sum($averages) / count($averages), 1)
+            'class' => $class,
+            'average' => number_format(array_sum($averages) / count($averages), 1)
         ];
     }
+
 
     // Iskolai szintű rendezés összátlag alapján
     if ($schoolWide) {
@@ -317,11 +322,11 @@ function rankStudents(bool $schoolWide = false): array
         }
 
         // Összátlag szerinti rangsor
-        usort($finalOverallRankings, fn($a, $b) => $b['overallAverage'] <=> $a['overallAverage']);
+        usort($finalOverallRankings, fn($a, $b) => $b['average'] <=> $a['average']);
         $schoolWideRankings['overall'] = $finalOverallRankings;
+
         return $schoolWideRankings;
     }
-
     return $subjectRankings;
 }
 
@@ -346,7 +351,7 @@ function displaySubjectRankings(array $rankings, string $selectedClass = 'all'):
 
             if (isset($rankings['overall'][$i])) {
                 $student = $rankings['overall'][$i];
-                echo "<td>{$student['name']} ({$student['class']}, {$student['overallAverage']})</td>";
+                echo "<td>{$student['name']} ({$student['class']}, {$student['average']})</td>";
             } else {
                 echo "<td>-</td>";
             }
@@ -403,6 +408,58 @@ function displaySubjectRankings(array $rankings, string $selectedClass = 'all'):
     echo "</table>";
 }
 
+function displayBestAndWorst($array)
+{
+    $header = ['Overall', ...DATA['subjects']];
+    echo "<table><tr>";
+    foreach ($header as $subject) {
+        echo "<td>$subject</td>";
+    }
+    echo "</tr>";
+
+    $subjectAverages = $array[0];
+
+    $minMaxResults = []; // To store results for each subject
+
+// Loop through subjects to calculate min and max values
+    foreach (array_keys(reset($subjectAverages)) as $subject) {
+        $minValue = PHP_FLOAT_MAX;
+        $maxValue = PHP_FLOAT_MIN;
+        $minClass = '';
+        $maxClass = '';
+
+        foreach ($subjectAverages as $class => $subjects) {
+            if (isset($subjects[$subject])) {
+                $value = floatval($subjects[$subject]);
+
+                if ($value < $minValue) {
+                    $minValue = $value;
+                    $minClass = $class;
+                }
+
+                if ($value > $maxValue) {
+                    $maxValue = $value;
+                    $maxClass = $class;
+                }
+            }
+        }
+
+        $minMaxResults[$subject] = [
+            'minValue' => $minValue,
+            'minClass' => $minClass,
+            'maxValue' => $maxValue,
+            'maxClass' => $maxClass,
+        ];
+    }
+
+// Print results
+    foreach ($minMaxResults as $subject => $result) {
+
+        echo "<td> {$result['minValue']}, {$result['minClass']} </td>";
+    }
+
+    var_dump($minMaxResults);
+}
 function SaveQueryData($file, string $query): void
 {
     switch ($query) {
@@ -433,31 +490,71 @@ function SaveQueryData($file, string $query): void
             break;
 
         case 'ranking':
-            if ($_SESSION['CurrentClass'] == 'all'){
-                $rankings = rankStudents(true); // School-wide rankings
+            if ($_SESSION['CurrentClass'] === 'all') {
+                // schoolwide saving
+                $rankings = rankStudents(true);
+                $header = ['Rank', 'Overall', ...array_keys($rankings)];
+                fputcsv($file, $header, ';');
 
+                $maxRows = max(array_map('count', $rankings));
+                for ($i = 0; $i < $maxRows; $i++) {
+                    $row = [$i + 1]; // Add the rank
 
-            }else {
+                    // Add overall data
+                    if (isset($rankings['overall'][$i])) {
+                        $student = $rankings['overall'][$i];
+                        $row[] = "{$student['name']} ({$student['class']}, {$student['average']})";
+                    } else {
+                        $row[] = '-';
+                    }
+
+                    // Add subject-specific data
+                    foreach ($rankings as $subject => $students) {
+                        if ($subject === 'overall') {
+                            continue;
+                        }
+
+                        if (isset($students[$i])) {
+                            $student = $students[$i];
+                            $row[] = "{$student['name']} ({$student['class']}, {$student['average']})";
+                        } else {
+                            $row[] = '-';
+                        }
+                    }
+
+                    fputcsv($file, $row, ';'); // Write the row to the file
+                }
+            } else {
+                // Class-specific saving
                 $rankings = rankStudents();
+                if (!isset($rankings[$_SESSION['CurrentClass']])) {
+                    echo "<div class='popup error'>Invalid class selected:" . $_SESSION['CurrentClass'] . "</div>";
+                    return;
+                }
 
-            }
+                $header = ['Rank', ...DATA['subjects']]; // Add subjects as headers
+                fputcsv($file, $header, ';'); // Write the header row
 
+                $subjects = $rankings[$_SESSION['CurrentClass']];
+                $maxRows = max(array_map('count', $subjects));
 
-            // Write header
-            fputcsv($file, ['Rank', 'Name', 'Class', 'Overall Average'], ';');
+                for ($i = 0; $i < $maxRows; $i++) {
+                    $row = [$i + 1]; // Add the rank
 
-            // Write rankings
-            foreach ($rankings['overall'] as $index => $student) {
-                fputcsv($file, [
-                    $index + 1,
-                    $student['name'],
-                    $student['class'],
-                    $student['overallAverage']
-                ], ';');
+                    foreach ($subjects as $students) {
+                        if (isset($students[$i])) {
+                            $row[] = "{$students[$i]['name']} ({$students[$i]['average']})";
+                        } else {
+                            $row[] = '-';
+                        }
+                    }
+                    fputcsv($file, $row, ';'); // Write the row to the file
+                }
             }
             break;
+        case "bestnworst":
 
-        // Add more cases for other queries if needed
+
         default:
             fwrite($file, "No data for this query.\n");
             break;

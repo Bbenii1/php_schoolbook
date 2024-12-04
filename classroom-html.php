@@ -2,7 +2,7 @@
 /**
  * @author Szlonkai Benedek
  */
-require_once ("classroom-data.php");
+require_once ("classroom-helper.php");
 
 if (empty($_SESSION['schoolbook'])){
     $_SESSION['schoolbook'] = generateSchoolBook();
@@ -76,17 +76,19 @@ $classStudents = $_SESSION['schoolbook'];
                     echo "<a href=?query=ranking&class=". $class . "><button class='$class osztaly'>" . $class . "</button></a>";
                 }
                 echo "<a href=?query=ranking&class=all><button class='all osztaly'>all</button></a>";
-                echo "</div> <br> <h2>tanulók rangsorolása iskolai és osztály szinten, tantárgyanként és összesítve, kiemelve a 3 legjobb és a 3 leggyengébb tanulót</h2>";
+                echo "</div> <br> <h2>Rank students by their average in class or overall.</h2>";
 
                 if (isset($_GET['class'])) {
-                    $class = $_GET['class'] ?? 'all'; // Alapértelmezett osztály: 'all'
-                    $rankings = ($_GET['class'] == 'all') ? rankStudents(true): rankStudents();// Rangsort generáló függvény
+                    $class = $_GET['class'] ?? 'all';
+                    $rankings = ($_GET['class'] == 'all') ? rankStudents(true): rankStudents();
                     displaySubjectRankings($rankings, $class);
                 }
 
             }
             else if ($_GET['query'] == "bestnworst") {
                 echo "<br> <h2>The best and the weakest class by subject and overall.</h2>";
+                $ranking = subjectAverages();
+                displayBestAndWorst($ranking);
             }
         }
 
@@ -101,7 +103,7 @@ $classStudents = $_SESSION['schoolbook'];
             //display different popup messages based on save status
             if ($status === 'success' && isset($_GET['file'])) {
                 $fileName = htmlspecialchars($_GET['file']);
-                echo "<div class='popup success'><strong>$fileName</strong> was successfully saved.</div>";
+                echo "<div class='popup'><strong>$fileName</strong> was successfully saved.</div>";
             } elseif ($status === 'error') {
                 echo "<div class='popup error'>An error occurred while saving the file. Please try again.</div>";
             }
