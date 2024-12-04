@@ -1,5 +1,5 @@
 html, body {
-    /*background-color: #E5E9EC;*/
+    background-color: #E5E9EC;
     margin: 0;
     font-family: Arial, sans-serif;
     padding: 0 0 20px;
@@ -170,7 +170,6 @@ footer {
     border-bottom-right-radius: 8px;
 }
 
-
 .avgQueryTable th{
     text-transform: capitalize;
 }
@@ -212,6 +211,13 @@ footer {
     background-color: rgba(255, 110, 110, 0.5);
 }
 
+.bestTable tr:hover {
+    background-color: #A5D6A7;
+}
+
+.bestTable tr td:first-child {
+    text-align: center;
+}
 
 @keyframes showAndHide {
     0% {
