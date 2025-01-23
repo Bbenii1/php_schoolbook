@@ -9,12 +9,13 @@ html, body {
 a{
     text-decoration: none;
     margin: 0;
+    color: white;
 }
 
 h1 {
     text-align: center;
     margin: 25vh auto auto auto;
-    font-size: 50pt;
+    font-size: 64pt;
     color: #30A8CB;
 }
 
@@ -23,14 +24,32 @@ h2{
     color: #406A7C;
 }
 
+
 nav {
     display: flex;
+    justify-content: flex-start;
     background-color: #406A7C;
     height: 50px;
     box-shadow: 0 5px 5px rgba(0, 0, 0, 0.1);
 }
 
-button, input {
+nav a, nav button {
+    color: white;
+    text-decoration: none;
+}
+
+.homeBtn {
+    height: 24px;
+    width: 24px;
+    margin: 13px;
+    transition: .2s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+.homeBtn:hover {
+    color: #9ec9d6;
+    transform: scale(1.1);
+}
+
+button, input, select{
     padding: 16px;
     height: 50px;
     margin: 0;
@@ -40,6 +59,24 @@ button, input {
     color: white;
     display: inline-block;
     transition: .2s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+
+select {
+    text-align: center;
+    appearance: none;
+    padding: 5px;
+}
+
+select option {
+    text-align: center; /* Center the option text */
+}
+
+select option:not(:first-child):not(:last-child) {
+    text-transform: uppercase;
+}
+
+select:hover{
+    background-color: #518094;
 }
 
 button:hover {
@@ -219,6 +256,89 @@ footer {
     text-align: center;
 }
 
+.line-one, .line-two, .line-three {
+    width: 1.5rem;
+}
+
+.dropbtn {
+    padding: 0;
+    height: 30px;
+    margin: 10px;
+}
+.burger-menu {
+    display: flex;
+    flex-direction: column;
+    width: fit-content;
+    margin-left: auto;
+    justify-content: center;
+    cursor: pointer;
+    transition: .2s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+
+.burger-menu div {
+    width: 1.875rem;
+    height: 0.25rem;
+    background-color: #fff;
+    margin: 3px 0;
+    transition: .2s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+
+.burger-menu:hover div {
+    background-color: #9ec9d6;
+}
+
+.burger-menu:hover .line-one, .burger-menu:hover .line-three {
+    transform: translateX(3px);
+}
+.burger-menu:hover .line-two {
+    transform: translateX(-3px);
+}
+
+.dropdown {
+    float: right;
+    margin-left: auto;
+    overflow: hidden;
+}
+
+.dropdown .dropbtn {
+    font-size: 16px;
+    border: none;
+    outline: none;
+    color: white;
+    background-color: inherit;
+    font-family: inherit;
+}
+
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    text-align: center;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+    transition: .2s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+
+.dropdown-content a:hover {
+    background-color: #ddd;
+}
+
+.showMenu {
+    display: block;
+}
+
+
 @keyframes showAndHide {
     0% {
         opacity: 0;
@@ -235,5 +355,6 @@ footer {
     100% {
         opacity: 0;
         transform: translateY(-20px); /* fade out */
+        display: none;
     }
 }
