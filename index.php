@@ -9,7 +9,6 @@ require_once "functions.php";
 
 /*$classStudents = $_SESSION['schoolbook'];*/
 //var_dump($_SESSION['schoolbook']['11a'][1]);
-
 ?>
 
 <!DOCTYPE html>
@@ -64,48 +63,55 @@ require_once "functions.php";
             </button>
             <div class="dropdown-content">
                 <a href="?createDB">Create Database</a>
+                <a href="?uploadDB">Upload Database</a>
                 <a href="?reset">Reset students</a>
                 <?php
-                $host = 'localhost';
-                $username = 'root';
-                $password = '';
+                $servername = "localhost";
+                $username = "root";
+                $password = "";
+                $dbname = "schoolbook";
 
                 try {
-                    $mysqli = new mysqli($host, $username, $password);
+                    $mysqli = new mysqli($servername, $username, $password);
 
-                    echo "<span style='color: #2b812f'>Connectable,</span><br>";
+                    echo "<span style='color: #2b812f'>connectable</span><br>";
+
+                    $sql = "SHOW DATABASES LIKE '$dbname'";
+                    $result = $mysqli->query($sql);
+
+                    if ($result->num_rows > 0) {
+                        echo "<span style='color: #2b812f'>database exists</span><br>";
+
+                        $mysqli->select_db($dbname);
+
+                        $tablesQuery = "SELECT TABLE_NAME 
+                        FROM INFORMATION_SCHEMA.TABLES 
+                        WHERE TABLE_SCHEMA = '$dbname'";
+                        $tablesResult = $mysqli->query($tablesQuery);
+
+                        if ($tablesResult->num_rows > 0) {
+                            $countQuery = "SELECT COUNT(*) AS rowCount FROM classes";
+                            $countResult = $mysqli->query($countQuery)->fetch_assoc()['rowCount'];
+
+                            if ($countResult > 0) {
+                                echo "<span style='color: #2b812f'>database uploaded</span><br>";
+                            } else {
+                                echo "<span style='color: #dc3545'>database is empty</span><br>";
+                            }
+
+                        } else {
+                            echo "<span style='color: #dc3545'>no tables found</span><br>";
+                        }
+                    } else {
+                        echo "<span style='color: #dc3545'>database doesn't exist</span><br>";
+                    }
                 } catch (mysqli_sql_exception $e) {
-
-                    echo "<span style='color: #dc3545'>Unable to connect to database,</span><br>";
+                    echo "<span style='color: #dc3545'>unable to connect to database</span><br>";
                 } finally {
                     if (isset($mysqli) && $mysqli->ping()) {
                         $mysqli->close();
                     }
                 }
-                ?>
-                <?php
-                $servername = "localhost";
-                $username = "root";
-                $password = "";
-                $dbname = "classroom";
-
-                $conn = new mysqli($servername, $username, $password);
-
-                // Check connection
-                if ($conn->connect_error) {
-                    die("Connection failed: " . $conn->connect_error);
-                }
-
-                $sql = "SHOW DATABASES LIKE '$dbname'";
-                $result = $conn->query($sql);
-
-                // Check if the database exists
-                if ($result->num_rows > 0) {
-                    echo "<span style='color: #2b812f'>Database exists.</span>";
-                } else {
-                    echo "<span style='color: #dc3545'>Database doesn't exist.</span>";
-                }
-                $conn->close();
                 ?>
             </div>
         </div>
@@ -125,7 +131,7 @@ require_once "functions.php";
                     ClassQuery($class);
                     /*displayInTable($class, $classStudents[$class]);*/
                 }
-            } elseif (array_key_exists($class, $_SESSION['schoolbook'])) {
+            } elseif ($class) {
                 ClassQuery($class);
                 /*displayInTable($class, $classStudents[$class]);*/
             } else {

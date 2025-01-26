@@ -4,7 +4,7 @@
  */
 
 include('data.php');
-require_once 'database/db_config.php';
+include 'database/db_config.php';
 
 //save the active class in session
 if (isset($_GET['class'])){
@@ -16,13 +16,20 @@ if (isset($_GET["save"])) {
     SaveToFile();
 }
 
+if (!isset($_SESSION['schoolbook'])) {
+    generateSchoolBook();
+}
+
 //reset session
 if (isset($_GET['reset'])) {
     unset($_SESSION['schoolbook']);
 
+    CreateDatabase();
+
     //Store the popup message in the session
     $_SESSION['popup_message'] = "<div class='popup success'>Students successfully reset.</div>";
     header("Location: ?");
+    exit;
 }
 
 //display popup message stored in session, then delete
@@ -53,7 +60,7 @@ function generateMarks(): void
             $avgs = [];
 
             for ($s = 0; $s < count(DATA['subjects']); $s++){
-                $count = rand(0, 5);
+                $count = rand(3, 5);
                 $marks = [];
                 $avg = 0;
 

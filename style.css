@@ -31,6 +31,9 @@ nav {
     background-color: #406A7C;
     height: 50px;
     box-shadow: 0 5px 5px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    width: 100%;
+    top: 0;
 }
 
 nav a, nav button {
@@ -160,6 +163,7 @@ footer {
     font-family: Arial, sans-serif;
     opacity: 0;
     animation: showAndHide 5s ease forwards;
+    z-index: 100;
 }
 
 .popup.error {
@@ -287,12 +291,12 @@ footer {
     background-color: #9ec9d6;
 }
 
-.burger-menu:hover .line-one, .burger-menu:hover .line-three {
+/*.burger-menu:hover .line-one, .burger-menu:hover .line-three {
     transform: translateX(3px);
 }
 .burger-menu:hover .line-two {
     transform: translateX(-3px);
-}
+}*/
 
 .dropdown {
     float: right;

@@ -4,24 +4,22 @@ include("db_queries.php");
 
 // set up database
 if (isset($_GET['createDB'])){
-
     CreateDatabase();
+}
 
+if (isset($_GET['uploadDB'])){
     DatabaseUpload();
-
-    $_SESSION['popup_message'] = "<div class='popup'>Database created!</div>";
-    header("Location: ?");
 }
 
 //create database
 function CreateDatabase(){
     $mysqli = new mysqli("localhost", "root", "");
 
-    $mysqli->query("DROP DATABASE IF EXISTS classroom");
+    $mysqli->query("DROP DATABASE IF EXISTS schoolbook");
 
-    $mysqli->query("CREATE DATABASE classroom DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci");
+    $mysqli->query("CREATE DATABASE schoolbook DEFAULT CHARACTER SET utf8 COLLATE utf8_hungarian_ci");
 
-    $mysqli -> query("USE classroom");
+    $mysqli -> query("USE schoolbook");
 
     $mysqli -> query("CREATE TABLE IF NOT EXISTS students (
                                 studentID INT NOT NULL PRIMARY KEY AUTO_INCREMENT, 
@@ -45,15 +43,21 @@ function CreateDatabase(){
                                 subject varchar(30) NOT NULL )");
 
     $mysqli -> close();
+
+    $_SESSION['popup_message'] = "<div class='popup'>Database created!</div>";
+    header("Location: ?");
+    exit;
 }
 
 function DatabaseUpload()
 {
-    if (empty($_SESSION['schoolbook'])){
-        generateSchoolBook();
+    if (!empty(execSQL("SELECT * FROM students"))) {
+        $_SESSION['popup_message'] = "<div class='popup error'>Already uploaded!</div>";
+        header("Location: ?");
+        exit;
     }
 
-    $mysqli = new mysqli("localhost", "root", "", "classroom");
+    $mysqli = new mysqli("localhost", "root", "", "schoolbook");
 
     foreach (DATA['classes'] as $class) {
         $mysqli->query("INSERT INTO classes (class) VALUES ('$class')");
@@ -72,12 +76,12 @@ function DatabaseUpload()
     }
 
     foreach ($_SESSION['schoolbook'] as $key => $record) {
-        foreach ($record as $studentkey => $value) {
+        foreach ($record as $value) {
             $mysqli->query("INSERT INTO students (firstName, lastName, gender, classID) VALUES ('$value[0]', '$value[1]', '$value[2]', '$classIDs[$key]')");
         }
     }
 
-    $result = $mysqli->query("SELECT subject, classroom.subjects.subjectID FROM subjects;");
+    $result = $mysqli->query("SELECT subject, schoolbook.subjects.subjectID FROM subjects;");
     $subjectIDs = [];
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
@@ -85,12 +89,14 @@ function DatabaseUpload()
         }
     }
 
-    $result = $mysqli->query("SELECT studentID, firstName, lastName FROM students;");
+    $result = $mysqli->query("SELECT studentID, firstName, lastName, classID FROM students;");
     $students = [];
 
     if ($result->num_rows > 0) {
+
         while ($row = $result->fetch_assoc()) {
-            $key = $row['firstName'] . ' ' . $row['lastName'];
+
+            $key = $row['firstName'] . $row['lastName'] . $row['classID'];
             $students[$key] = $row['studentID'];
         }
     }
@@ -99,11 +105,9 @@ function DatabaseUpload()
 
         $subjects = DATA['subjects'];
 
-        /*$subjects = ['math', 'history', 'biology', 'chemistry', 'physics', 'informatics', 'alchemy', 'astrology'];*/
-
         foreach ($record as $key => $student) {
-            $name = $record[$key][0] . ' ' . $record[$key][1];
 
+            $name = $record[$key][0] . $record[$key][1] . $classIDs[$class];
 
             foreach ($subjects as $subject) {
                 if (!isset($student[$subject])) {
@@ -117,13 +121,10 @@ function DatabaseUpload()
                     $gradeValue = $mysqli->real_escape_string($grade);
                     $gradeDate = $mysqli->real_escape_string($date);
 
-                    $query = "
-                    INSERT INTO grades (studentID, subjectID, grade, date) 
-                    VALUES ('$studentID', '$subjectID', '$gradeValue', '$gradeDate')
-                ";
+                    $query = "INSERT INTO grades (studentID, subjectID, grade, date)
+                              VALUES ('$studentID', '$subjectID', '$gradeValue', '$gradeDate')";
                     $mysqli->query($query);
 
-                    // Check for errors (optional debugging)
                     if ($mysqli->error) {
                         echo "Error: " . $mysqli->error . "<br>";
                     }
@@ -131,5 +132,8 @@ function DatabaseUpload()
             }
         }
     }
-    unset($_SESSION['schoolbook']);
+    /*unset($_SESSION['schoolbook']);*/
+    $_SESSION['popup_message'] = "<div class='popup'>Database uploaded!</div>";
+    header("Location: ?");
+    exit;
 }

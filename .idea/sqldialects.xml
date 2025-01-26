@@ -3,5 +3,6 @@
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/database/db_config.php" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/database/db_queries.php" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/index.php" dialect="GenericSQL" />
   </component>
 </project>
