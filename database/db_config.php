@@ -13,7 +13,7 @@ if (isset($_GET['uploadDB'])){
 
 //create database
 function CreateDatabase(){
-    $mysqli = new mysqli("localhost", "root", "");
+    $mysqli = connect();
 
     $mysqli->query("DROP DATABASE IF EXISTS schoolbook");
 
@@ -57,7 +57,7 @@ function DatabaseUpload()
         exit;
     }
 
-    $mysqli = new mysqli("localhost", "root", "", "schoolbook");
+    $mysqli = connect();
 
     foreach (DATA['classes'] as $class) {
         $mysqli->query("INSERT INTO classes (class) VALUES ('$class')");
@@ -93,22 +93,23 @@ function DatabaseUpload()
     $students = [];
 
     if ($result->num_rows > 0) {
-
         while ($row = $result->fetch_assoc()) {
-
-            $key = $row['firstName'] . $row['lastName'] . $row['classID'];
+            /*var_dump($row);*/
+            $key = $row['firstName'] . $row['lastName'] . $row['studentID'];
             $students[$key] = $row['studentID'];
+            /*var_dump($students);*/
         }
     }
 
+    $index = 1;
     foreach ($_SESSION['schoolbook'] as $class => $record) {
 
         $subjects = DATA['subjects'];
 
         foreach ($record as $key => $student) {
 
-            $name = $record[$key][0] . $record[$key][1] . $classIDs[$class];
-
+            $name = $record[$key][0] . $record[$key][1] . $index;
+            $index++;
             foreach ($subjects as $subject) {
                 if (!isset($student[$subject])) {
                     continue;
@@ -132,6 +133,7 @@ function DatabaseUpload()
             }
         }
     }
+
     /*unset($_SESSION['schoolbook']);*/
     $_SESSION['popup_message'] = "<div class='popup'>Database uploaded!</div>";
     header("Location: ?");

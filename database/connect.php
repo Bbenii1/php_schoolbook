@@ -1,11 +1,16 @@
 <?php
-function execSQL($sql) {
+function connect(): mysqli
+{
     $host = "localhost";
     $username = "root";
-    $password = "";
+    $password = "admin";
     $dbname = "schoolbook";
 
-    $mysqli = new mysqli($host, $username, $password, $dbname);
+    return new mysqli($host, $username, $password, $dbname);
+}
+
+function execSQL($sql) {
+    $mysqli = connect();
 
     try {
         $data = mysqli_fetch_all($mysqli->query($sql));
@@ -23,4 +28,23 @@ function execSQL($sql) {
     finally {
         $mysqli->close();
     }
+}
+
+function execAssocSQL($query) {
+    $mysqli = connect();
+
+    $result = $mysqli->query($query);
+
+    if (!$result) {
+        return false;
+    }
+
+    $data = [];
+    while ($row = $result->fetch_assoc()) {
+        $data[] = $row;
+    }
+
+    $mysqli->close();
+
+    return $data;
 }

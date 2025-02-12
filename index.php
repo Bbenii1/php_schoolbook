@@ -66,27 +66,22 @@ require_once "functions.php";
                 <a href="?uploadDB">Upload Database</a>
                 <a href="?reset">Reset students</a>
                 <?php
-                $servername = "localhost";
-                $username = "root";
-                $password = "";
-                $dbname = "schoolbook";
-
                 try {
-                    $mysqli = new mysqli($servername, $username, $password);
+                    $mysqli = connect();
 
                     echo "<span style='color: #2b812f'>connectable</span><br>";
 
-                    $sql = "SHOW DATABASES LIKE '$dbname'";
+                    $sql = "SHOW DATABASES LIKE 'schoolbook'";
                     $result = $mysqli->query($sql);
 
                     if ($result->num_rows > 0) {
                         echo "<span style='color: #2b812f'>database exists</span><br>";
 
-                        $mysqli->select_db($dbname);
+                        $mysqli->select_db('schoolbook');
 
                         $tablesQuery = "SELECT TABLE_NAME 
                         FROM INFORMATION_SCHEMA.TABLES 
-                        WHERE TABLE_SCHEMA = '$dbname'";
+                        WHERE TABLE_SCHEMA = 'schoolbook'";
                         $tablesResult = $mysqli->query($tablesQuery);
 
                         if ($tablesResult->num_rows > 0) {
@@ -150,9 +145,9 @@ require_once "functions.php";
 
             if ($_GET['query'] == "SubjectAverages") {
                 echo "<br> <h2>Class averages by subject and overall.</h2>";
-                $temp = subjectAverages();
-                displayAvgQuery($temp[0], $temp[1], $temp[2]);
-
+                /*$temp = subjectAverages();*/
+                /*displayAvgQuery($temp[0], $temp[1], $temp[2]);*/
+                getClassAverages();
             }
             else if ($_GET['query'] == "Ranking") {
                 echo "<div class='queryButton'>";
@@ -165,9 +160,8 @@ require_once "functions.php";
                 echo "</div> <br> <h2>Rank students by their average in class or overall.</h2>";
 
                 if (isset($_GET['class'])) {
-                    $class = $_GET['class'] ?? 'all';
-                    $rankings = ($_GET['class'] == 'all') ? rankStudents(true): rankStudents();
-                    displaySubjectRankings($rankings, $class);
+
+                    getRanking();
                 }
 
             }
@@ -200,7 +194,5 @@ require_once "functions.php";
             }
         }
     ?>
-
-    <!--<footer>Created by Szlonkai Benedek</footer>-->
 </body>
 </html>
