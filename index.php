@@ -25,17 +25,41 @@ require_once "functions.php";
     <nav>
         <a href="?" class="homeBtn"><i class="fa fa-home" style="font-size:24px"></i></a>
 
+        <?php
+        $currentYear = isset($_GET['year']) ? $_GET['year'] : '';
+        $currentClass = isset($_GET['class']) ? $_GET['class'] : '';
+
+        function buildQuery($params) {
+            return '?' . http_build_query(array_merge($_GET, $params));
+        }
+        ?>
+
+        <!-- Year Select -->
+        <select id="year-select" name="year" onchange="window.location.href=this.value;">
+            <option value="<?= buildQuery(['year' => '']) ?>" <?= empty($currentYear) ? 'selected' : '' ?>>Select year</option>
+            <?php for ($schoolYear = 2022; $schoolYear < 2025; $schoolYear++): ?>
+                <option value="<?= buildQuery(['year' => $schoolYear]) ?>" <?= ($currentYear == $schoolYear) ? 'selected' : '' ?>>
+                    <?= $schoolYear ?>
+                </option>
+            <?php endfor; ?>
+        </select>
+
+        <!-- Class Select -->
         <select id="class-select" name="class" onchange="window.location.href=this.value;">
-            <option value="" <?= !isset($_GET['class']) || empty($_GET['class']) ? 'selected' : '' ?>>Select a class</option>
-            <?php foreach (DATA['classes'] as $class): ?>
-                <option value="?class=<?= $class ?>" <?= (isset($_GET['class']) && $_GET['class'] === $class) ? 'selected' : '' ?>>
+            <?php $year = $_GET['year']; $classes = execSQL("SELECT DISTINCT class FROM classes WHERE schoolYear = '$year' "); echo $classes; ?>
+
+            <option value="<?= buildQuery(['class' => '']) ?>" <?= empty($currentClass) ? 'selected' : '' ?>>Select year first</option>
+
+
+            <?php if (isset($_GET['year'])): ?>
+                <option value="<?= buildQuery(['class' => '']) ?>" <?= empty($currentClass) ? 'selected' : '' ?>>Select a class</option>
+            <?php foreach ($classes as $class): ?>
+                <option value="<?= buildQuery(['class' => $class]) ?>" <?= ($currentClass === $class) ? 'selected' : '' ?>>
                     <?= $class ?>
                 </option>
             <?php endforeach; ?>
-            <option value="?class=all" <?= (isset($_GET['class']) && $_GET['class'] === 'all') ? 'selected' : '' ?>>All class</option>
+            <option value="<?= buildQuery(['class' => 'all']) ?>" <?= ($currentClass === 'all') ? 'selected' : '' ?>>All class</option> <?php endif; ?>
         </select>
-
-
 
         <!-- query, save, reset button -->
         <form method="GET">
@@ -119,16 +143,16 @@ require_once "functions.php";
                   <h2>A kréta... hát, az porzik, és csak táblán jön be!</h2>";
         }
 
-        if (!isset($_GET['query']) && isset($_GET['class'])){
+        if (!isset($_GET['query']) && isset($_GET['class']) && isset($_GET['year'])){
             $class = $_GET['class'];
+            $year = $_GET['year'];
             if ($class == 'all') {
                 foreach (DATA['classes'] as $class){
-                    ClassQuery($class);
-                    /*displayInTable($class, $classStudents[$class]);*/
+                    ClassQuery($year, $class);
+
                 }
             } elseif ($class) {
-                ClassQuery($class);
-                /*displayInTable($class, $classStudents[$class]);*/
+                ClassQuery($year, $class);
             } else {
                 /*echo "<div class='popup error'>Hibás osztály választás.</div>";*/
                 $_SESSION['popup_message'] = "<div class='popup error'>Hibás osztály választás.</div>";

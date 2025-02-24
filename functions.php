@@ -55,35 +55,37 @@ function generateStudents($firstnames, $lastnames, $min=10, $max = 15): array
 // Generate marks for every subject for every student
 function generateMarks(): void
 {
-    foreach (DATA['classes'] as $class){
-        for ($i = 0; $i < count($_SESSION['schoolbook'][$class]); $i++){
-            $avgs = [];
+    for ($schoolYear = 2022; $schoolYear < 2025; $schoolYear++) {
+        foreach (DATA['classes'] as $class){
+            for ($i = 0; $i < count($_SESSION['schoolbook'][$schoolYear][$class]); $i++){
+                $avgs = [];
 
-            for ($s = 0; $s < count(DATA['subjects']); $s++){
-                $count = rand(3, 5);
-                $marks = [];
-                $avg = 0;
+                for ($s = 0; $s < count(DATA['subjects']); $s++){
+                    $count = rand(3, 5);
+                    $marks = [];
+                    $avg = 0;
 
-                $startDate = strtotime("2024-01-01");
-                $endDate = strtotime("2025-01-01");
+                    $startDate = strtotime($schoolYear . "-01-01");
+                    $endDate = strtotime($schoolYear + 1 . "-01-01");
 
-                for ($k = 0; $k < $count; $k++) {
-                    $r = rand(1, 5);
-                    $randomTimestamp = rand($startDate, $endDate);
-                    $randomDate = date("Y-m-d", $randomTimestamp);
+                    for ($k = 0; $k < $count; $k++) {
+                        $r = rand(1, 5);
+                        $randomTimestamp = rand($startDate, $endDate);
+                        $randomDate = date("Y-m-d", $randomTimestamp);
 
-                    $marks[$randomDate] = $r;
-                    $avg += $r;
+                        $marks[$randomDate] = $r;
+                        $avg += $r;
+                    }
+
+                    if(COUNT($marks) > 0){
+                        $avg = $avg / count($marks);
+                    }
+
+                    $avgs[DATA['subjects'][$s]] = $avg;
+                    $_SESSION['schoolbook'][$schoolYear][$class][$i][DATA['subjects'][$s]]= $marks;
                 }
-
-                if(COUNT($marks) > 0){
-                    $avg = $avg / count($marks);
-                }
-
-                $avgs[DATA['subjects'][$s]] = $avg;
-                $_SESSION['schoolbook'][$class][$i][DATA['subjects'][$s]]= $marks;
+                $_SESSION['schoolbook'][$schoolYear][$class][$i]['avg'] = $avgs;
             }
-            $_SESSION['schoolbook'][$class][$i]['avg'] = $avgs;
         }
     }
 }
@@ -93,8 +95,10 @@ function generateSchoolBook()
 {
     $classStudents = [];
 
-    foreach (DATA['classes'] as $class) {
-        $classStudents[$class] = generateStudents(DATA['firstnames'], DATA['lastnames']);
+    for ($schoolYear = 2022; $schoolYear < 2025; $schoolYear++) {
+        foreach (DATA['classes'] as $class) {
+            $classStudents[$schoolYear][$class] = generateStudents(DATA['firstnames'], DATA['lastnames']);
+        }
     }
 
     $_SESSION['schoolbook'] = $classStudents;

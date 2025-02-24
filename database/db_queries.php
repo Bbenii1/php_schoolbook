@@ -1,7 +1,7 @@
 <?php
 include("connect.php");
 
-function displayInTable($class, $classStudents, $grades, $studentAverages, $subjectAverages): void
+function displayInTable($class, $classStudents, $grades, $studentAverages, $subjectAverages, $classAverage): void
 {
     echo "<table class='classTable'><tr><th>$class</th>";
 
@@ -51,16 +51,17 @@ function displayInTable($class, $classStudents, $grades, $studentAverages, $subj
         }
         echo "<td>" . $subjectAvg . "</td>";
     }
-    echo "<td>-</td></tr>";
+    echo "<td>$classAverage[0]</td></tr>";
 
     echo "</table>";
 }
 
-function ClassQuery($class) {
+function ClassQuery($year, $class) {
     $sql = "SELECT s.studentID, s.firstName AS firstName, s.lastName AS lastName, s.gender AS gender, c.class AS class
             FROM students s
             JOIN classes c ON c.classID = s.classID
-            WHERE c.class LIKE '$class';";
+            WHERE c.class LIKE '$class' AND c.schoolYear = '$year'
+            ORDER BY s.firstName, s.lastName DESC;";
 
     $sql2 = "SELECT
                 s.studentID,
@@ -70,8 +71,9 @@ function ClassQuery($class) {
              JOIN subjects sub ON sub.subjectID = g.subjectID
              JOIN students s ON s.studentID = g.studentID
              JOIN classes c ON c.classID = s.classID
-             WHERE c.class LIKE '$class'
-             GROUP BY s.studentID, sub.subject;";
+             WHERE c.class LIKE '$class' AND c.schoolYear = '$year'
+             GROUP BY s.studentID, sub.subject
+             ORDER BY s.firstName, s.lastName DESC;";
 
     $sql_student_avg = "
         SELECT 
@@ -80,8 +82,9 @@ function ClassQuery($class) {
         FROM grades g
         JOIN students s ON s.studentID = g.studentID
         JOIN classes c ON c.classID = s.classID
-        WHERE c.class LIKE '$class'
-        GROUP BY s.studentID;
+        WHERE c.class LIKE '$class' AND c.schoolYear = '$year'
+        GROUP BY s.studentID
+        ORDER BY s.firstName, s.lastName DESC;
     ";
 
     $sql_subject_avg = "
@@ -92,19 +95,33 @@ function ClassQuery($class) {
         JOIN subjects sub ON sub.subjectID = g.subjectID
         JOIN students s ON s.studentID = g.studentID
         JOIN classes c ON c.classID = s.classID
-        WHERE c.class LIKE '$class'
-        GROUP BY sub.subject;
+        WHERE c.class LIKE '$class' AND c.schoolYear = '$year'
+        GROUP BY sub.subject
+        ORDER BY s.firstName, s.lastName DESC;
     ";
+
+    $sqlOverallClassAvg = "SELECT AVG(student_avg) AS overall_avg
+            FROM (
+                SELECT 
+                    s.studentID,
+                    AVG(g.grade) AS student_avg
+                FROM grades g
+                JOIN students s ON s.studentID = g.studentID
+                JOIN classes c ON c.classID = s.classID
+                WHERE c.class LIKE '$class' AND c.schoolYear = '$year'
+                GROUP BY s.studentID
+            ) AS student_averages;";
 
     $data1 = execSQL($sql);
     $data2 = execSQL($sql2);
     $studentAverages = execSQL($sql_student_avg);
     $subjectAverages = execSQL($sql_subject_avg);
-
+    $classAverage = execAssocSQL($sqlOverallClassAvg);
+    var_dump($classAverage);
     if ($data1 === false || $data2 === false || $studentAverages === false || $subjectAverages === false) {
         header("Location: ?");
     } else {
-        displayInTable($class, $data1, $data2, $studentAverages, $subjectAverages);
+        displayInTable($class, $data1, $data2, $studentAverages, $subjectAverages, $classAverage);
     }
 }
 
@@ -223,4 +240,8 @@ function displayRankings($list) {
         echo "</tr>";
     }
     echo "</table>";
+}
+
+function getBestAndWorst(){
+
 }
