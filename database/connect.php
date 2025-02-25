@@ -5,6 +5,7 @@ function connect(): mysqli
     $username = "root";
     $password = "admin";
     $dbname = "schoolbook";
+    mysqli_connect($host, $username, $password)->query("CREATE DATABASE IF NOT EXISTS $dbname");
 
     return new mysqli($host, $username, $password, $dbname);
 }
@@ -16,7 +17,7 @@ function execSQL($sql) {
         $data = mysqli_fetch_all($mysqli->query($sql));
 
         if (empty($data)) {
-            $_SESSION['popup_message'] = "<div class='popup error'>Empty database.</div>";
+            $_SESSION['popup_message'] = "<div class='popup error'>Query error.</div>";
             return false;
         }
         return $data;

@@ -7,8 +7,6 @@ session_start();
 
 require_once "functions.php";
 
-/*$classStudents = $_SESSION['schoolbook'];*/
-//var_dump($_SESSION['schoolbook']['11a'][1]);
 ?>
 
 <!DOCTYPE html>
@@ -29,52 +27,65 @@ require_once "functions.php";
         $currentYear = isset($_GET['year']) ? $_GET['year'] : '';
         $currentClass = isset($_GET['class']) ? $_GET['class'] : '';
 
+        /*make redirect links*/
         function buildQuery($params) {
+            if (!isset($_GET['query'])) return '?' . http_build_query(array_merge($_GET, $params));
+            else return '?' . http_build_query(array_merge($params));
+        }
+
+        function buildQueryString($params) {
             return '?' . http_build_query(array_merge($_GET, $params));
         }
-        ?>
+
+        $dbempty = execSQL("SELECT * FROM classes;");
+        if(empty(execSQL("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'schoolbook' AND TABLE_ROWS = 0;")) && empty($dbempty)) : ?>
+
+        <a href="?createDB" >Create database</a>
+
+        <?php elseif (connect() && empty($dbempty)) : ?>
+            <a href="?uploadDB" >Upload tables</a>
+        <?php else : ?>
 
         <!-- Year Select -->
         <select id="year-select" name="year" onchange="window.location.href=this.value;">
-            <option value="<?= buildQuery(['year' => '']) ?>" <?= empty($currentYear) ? 'selected' : '' ?>>Select year</option>
-            <?php for ($schoolYear = 2022; $schoolYear < 2025; $schoolYear++): ?>
-                <option value="<?= buildQuery(['year' => $schoolYear]) ?>" <?= ($currentYear == $schoolYear) ? 'selected' : '' ?>>
-                    <?= $schoolYear ?>
-                </option>
-            <?php endfor; ?>
+            <?php $years = execSQL("SELECT DISTINCT schoolYear FROM classes"); ?>
+            <?php if (!empty($years) && !isset($_GET['year'])) : ?>
+                <option value="<?= buildQuery(['year' => '']) ?>" <?= empty($currentYear) ? 'selected' : '' ?>>Year</option>
+            <?php endif; ?>
+
+            <?php if (!empty($years)) : foreach($years as $year): ?>
+                <option value="<?= buildQuery(['year' => $year[0]]) ?>" <?= ($currentYear == $year[0]) ? 'selected' : '' ?>><?= $year[0] ?></option>
+            <?php  endforeach; else :?>
+                <option value="?" selected="selected">DB error</option>
+            <?php endif; ?>
         </select>
 
         <!-- Class Select -->
+        <?php if (isset($_GET['year']) && !isset($_GET['query'])): ?>
         <select id="class-select" name="class" onchange="window.location.href=this.value;">
-            <?php $year = $_GET['year']; $classes = execSQL("SELECT DISTINCT class FROM classes WHERE schoolYear = '$year' "); echo $classes; ?>
+            <?php $year = $_GET['year']; $classes = execSQL("SELECT class FROM classes WHERE schoolYear = '$year' "); ?>
 
-            <option value="<?= buildQuery(['class' => '']) ?>" <?= empty($currentClass) ? 'selected' : '' ?>>Select year first</option>
+            <?php if(!isset($_GET['class']) && !empty($classes)): ?>
+                <option value="" selected="selected"><?= "Select class"?></option>
+            <?php elseif (!isset($_GET['class']) && empty($classes)):;?>
+                <option value="" selected="selected"><?= "No classes"?></option>
+            <?php endif; ?>
 
-
-            <?php if (isset($_GET['year'])): ?>
-                <option value="<?= buildQuery(['class' => '']) ?>" <?= empty($currentClass) ? 'selected' : '' ?>>Select a class</option>
-            <?php foreach ($classes as $class): ?>
-                <option value="<?= buildQuery(['class' => $class]) ?>" <?= ($currentClass === $class) ? 'selected' : '' ?>>
-                    <?= $class ?>
-                </option>
+            <?php foreach ($classes as $class):?>
+                <option value="<?= buildQuery(['class' => $class]) ?>" <?= ($currentClass === $class) ? 'selected' : '' ?>><?php echo $class[0] ?></option>
             <?php endforeach; ?>
-            <option value="<?= buildQuery(['class' => 'all']) ?>" <?= ($currentClass === 'all') ? 'selected' : '' ?>>All class</option> <?php endif; ?>
+
+            <?php if ( !empty($classes)): ?>
+                <option value="<?= buildQuery(['class' => 'all']) ?>" <?= ($currentClass === 'all') ? 'selected' : '' ?>>All class</option>
+            <?php endif; ?>
         </select>
+        <?php endif; ?>
 
         <!-- query, save, reset button -->
         <form method="GET">
             <a href="?query"><button type="button">Queries</button></a>
-            <input type="hidden" name="query" value="<?= isset($_GET['query']) ? htmlspecialchars($_GET['query']) : '' ?>">
-            <?php
-            if ( isset($_GET['class']) && !empty($_GET['class']) ||
-                (isset($_GET['query']) && $_GET['query'] == 'SubjectAverages') ||
-                (isset($_GET['query']) && $_GET['query'] == 'BestAndWorst') ||
-                (isset($_GET['query']) && !empty($_GET['query'])) && ($_GET['query'] == 'Ranking' && !empty($_GET['class'])))
-            {
-                echo '<button type="submit" name="save">Save</button>';
-            }
-            ?>
         </form>
+        <?php endif; ?>
 
         <!--Dropdown menu-->
         <div class="dropdown">
@@ -86,137 +97,119 @@ require_once "functions.php";
                 </a>
             </button>
             <div class="dropdown-content">
-                <a href="?createDB">Create Database</a>
-                <a href="?uploadDB">Upload Database</a>
+                <a href="?createDB">Create database</a>
+                <a href="?uploadDB">Upload tables</a>
                 <a href="?reset">Reset students</a>
-                <?php
-                try {
-                    $mysqli = connect();
-
-                    echo "<span style='color: #2b812f'>connectable</span><br>";
-
-                    $sql = "SHOW DATABASES LIKE 'schoolbook'";
-                    $result = $mysqli->query($sql);
-
-                    if ($result->num_rows > 0) {
-                        echo "<span style='color: #2b812f'>database exists</span><br>";
-
-                        $mysqli->select_db('schoolbook');
-
-                        $tablesQuery = "SELECT TABLE_NAME 
-                        FROM INFORMATION_SCHEMA.TABLES 
-                        WHERE TABLE_SCHEMA = 'schoolbook'";
-                        $tablesResult = $mysqli->query($tablesQuery);
-
-                        if ($tablesResult->num_rows > 0) {
-                            $countQuery = "SELECT COUNT(*) AS rowCount FROM classes";
-                            $countResult = $mysqli->query($countQuery)->fetch_assoc()['rowCount'];
-
-                            if ($countResult > 0) {
-                                echo "<span style='color: #2b812f'>database uploaded</span><br>";
-                            } else {
-                                echo "<span style='color: #dc3545'>database is empty</span><br>";
-                            }
-
-                        } else {
-                            echo "<span style='color: #dc3545'>no tables found</span><br>";
-                        }
-                    } else {
-                        echo "<span style='color: #dc3545'>database doesn't exist</span><br>";
-                    }
-                } catch (mysqli_sql_exception $e) {
-                    echo "<span style='color: #dc3545'>unable to connect to database</span><br>";
-                } finally {
-                    if (isset($mysqli) && $mysqli->ping()) {
-                        $mysqli->close();
-                    }
-                }
-                ?>
             </div>
         </div>
     </nav>
 
     <div>
         <?php
+        /*home page*/
         if ((isset($_GET['reset']) || !isset($_GET['class']) || $_GET['class'] == '') && !isset($_GET['query'])){
-            echo "<h1>Zsírkréta</h1><br>
-                  <h2>A kréta... hát, az porzik, és csak táblán jön be!</h2>";
+            echo "<h1>Zsírkréta</h1>";
         }
 
+        /*normal class selection*/
         if (!isset($_GET['query']) && isset($_GET['class']) && isset($_GET['year'])){
             $class = $_GET['class'];
             $year = $_GET['year'];
-            if ($class == 'all') {
-                foreach (DATA['classes'] as $class){
-                    ClassQuery($year, $class);
-
-                }
-            } elseif ($class) {
+            if ($class){
                 ClassQuery($year, $class);
             } else {
-                /*echo "<div class='popup error'>Hibás osztály választás.</div>";*/
                 $_SESSION['popup_message'] = "<div class='popup error'>Hibás osztály választás.</div>";
-                header("Location: ?");
+                header("Location:?");
             }
         }
 
+        /*queries*/
         if (isset($_GET['query']) && !isset($_GET['reset'])) {
             echo "<div class='querymenu'>
-                      <a href='?query=SubjectAverages'><button>Subject averages</button></a>
                       <a href='?query=Ranking'><button>Ranking</button></a>
-                      <a href='?query=BestAndWorst'><button>Best and worst</button></a>
+                      <a href='?query=Top10'><button>Top 10</button></a>
+                      <a href='?query=HallOfFame'><button>Hall of Fame</button></a>
                   </div>";
 
-            if ($_GET['query'] == "SubjectAverages") {
-                echo "<br> <h2>Class averages by subject and overall.</h2>";
-                /*$temp = subjectAverages();*/
-                /*displayAvgQuery($temp[0], $temp[1], $temp[2]);*/
-                getClassAverages();
-            }
-            else if ($_GET['query'] == "Ranking") {
-                echo "<div class='queryButton'>";
+            switch ($_GET['query']) {
+                case 'SubjectAverages':
+                    echo "<br> <h2>Class averages by subject and overall.</h2>";
+                    getClassAverages();
+                    break;
 
-                foreach (DATA['classes'] as $class) {
-                    echo "<a href=?query=Ranking&class=". $class . "><button class='$class osztaly'>" . $class . "</button></a>";
-                }
+                case 'Ranking':
+                    echo "<div class='queryButton'>";
+                    ?>
+                    <!--ranking year selection-->
+                    <select id="year-select" name="year" onchange="window.location.href=this.value;">
+                        <?php $year = $_GET['year']; $years = execSQL("SELECT DISTINCT schoolYear FROM classes"); ?>
 
-                echo "<a href=?query=Ranking&class=all><button class='all osztaly'>all</button></a>";
-                echo "</div> <br> <h2>Rank students by their average in class or overall.</h2>";
+                        <?php if(!isset($_GET['year'])): ?>
+                            <option value="" selected="selected"><?= "Select year"?></option>
+                        <?php endif;?>
 
-                if (isset($_GET['class'])) {
+                        <?php foreach ($years as $year):?>
+                            <option value="<?= buildQueryString(['year' => $year]) ?>" <?= ($currentYear === $year) ? 'selected' : '' ?>>
+                                <?php echo $year[0] ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
 
-                    getRanking();
-                }
+                    <!--ranking class selection-->
+                    <?php if(isset($_GET['year']) && isset($_GET['query']) && $_GET['query'] == 'Ranking'): ?>
+                        <select id="class-select" name="class" onchange="window.location.href=this.value;">
+                            <?php $year = $_GET['year'][0]; $classes = execSQL("SELECT class FROM classes WHERE schoolYear = '$year'");?>
 
-            }
-            else if ($_GET['query'] == "BestAndWorst") {
-                echo "<br> <h2>The best and the weakest class by subject and overall.</h2>";
-                $data = calcBestAndWorst();
-                displayBestAndWorst($data);
-            }
-        }
+                            <?php if(!isset($_GET['class'])): ?>
+                                <option value="" selected="selected"><?= "-"?></option>
+                            <?php endif;?>
 
-        ?>
+                            <?php foreach ($classes as $key => $class):?>
+                                <option value="<?= buildQueryString(['class' => $class]) ?>" <?= ($currentClass === $class) ? 'selected' : '' ?>>
+                                    <?php echo $classes[$key][0]?>
+                                </option>
+                            <?php endforeach; ?>
+
+                            <option value="<?= buildQueryString(['class' => 'all']) ?>" <?= ($currentClass === 'all') ? 'selected' : '' ?>>All class</option>
+                        </select>
+                    <?php endif; ?>
+
+                    <?php
+                    echo "</div>";
+
+                    /*get and display ranking*/
+                    if (isset($_GET['class']) && isset($_GET['year'])) getRanking($_GET['year'], $_GET['class']);
+                    break;
+
+                case 'Top10':
+                    echo "<div class='queryButton'>"; ?>
+                    <!--top10 query year selection-->
+                    <select id="year-select" name="year" onchange="window.location.href=this.value;">
+                        <?php $year = $_GET['year']; $years = execSQL("SELECT DISTINCT schoolYear FROM classes"); ?>
+
+                        <?php if(!isset($_GET['year'])): ?>
+                            <option value="" selected="selected"><?= "Select year"?></option>
+                        <?php endif;?>
+
+                        <?php foreach ($years as $year):?>
+                            <option value="<?= buildQueryString(['year' => $year]) ?>" <?= ($currentYear === $year) ? 'selected' : '' ?>>
+                                <?php echo $year[0] ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <?php
+                    echo "</div>";
+
+                    if (isset($_GET['year'])) getTop10($_GET['year']);
+
+                    break;
+
+                case 'HallOfFame':
+                    getHallOfFame();
+                    break;
+            };
+        }?>
     </div>
-
-    <?php
-        //check for 'status' parameter in the URL
-        if (isset($_GET['status'])) {
-            $status = $_GET['status'];
-
-            //display different popup messages based on save status
-            if ($status === 'success' && isset($_GET['file'])) {
-                $fileName = htmlspecialchars($_GET['file']);
-                /*echo "<div class='popup'><strong>$fileName</strong> was successfully saved.</div>";*/
-                $_SESSION['popup_message'] = "<div class='popup'><strong>$fileName</strong> was successfully saved.</div>";
-                header("Location: ?");
-
-            } elseif ($status === 'error') {
-                /*echo "<div class='popup error'>An error occurred while saving the file. Please try again.</div>";*/
-                $_SESSION['popup_message'] = "<div class='popup error'>An error occurred while saving the file. Please try again.</div>";
-                header("Location: ?");
-            }
-        }
-    ?>
 </body>
 </html>

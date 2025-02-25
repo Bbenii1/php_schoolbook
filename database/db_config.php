@@ -2,17 +2,9 @@
 
 include("db_queries.php");
 
-// set up database
-if (isset($_GET['createDB'])){
-    CreateDatabase();
-}
-
-if (isset($_GET['uploadDB'])){
-    DatabaseUpload();
-}
-
 //create database
-function CreateDatabase(){
+function CreateDatabase() : void
+{
     $mysqli = connect();
 
     $mysqli->query("DROP DATABASE IF EXISTS schoolbook");
@@ -47,24 +39,25 @@ function CreateDatabase(){
 
     $_SESSION['popup_message'] = "<div class='popup'>Database created!</div>";
     header("Location: ?");
-    exit;
 }
 
-function DatabaseUpload()
+//upload database with data from session
+function DatabaseUpload() : void
 {
-    if (!empty(execSQL("SELECT * FROM students"))) {
+    $mysqli = connect();
+
+    if (!empty(execSQL("SELECT * FROM classes"))) {
+        $mysqli->close();
         $_SESSION['popup_message'] = "<div class='popup error'>Already uploaded!</div>";
         header("Location: ?");
         exit;
     }
 
-    $mysqli = connect();
     for ($schoolyear = 2022; $schoolyear < 2025; $schoolyear++) {
         foreach (DATA['classes'] as $class) {
             $mysqli->query("INSERT INTO classes (class, schoolYear) VALUES ('$class', '$schoolyear')");
         }
     }
-
 
     foreach (DATA['subjects'] as $subject) {
         $mysqli->query("INSERT INTO subjects (subject) VALUES ('$subject')");
@@ -104,7 +97,6 @@ function DatabaseUpload()
             /*var_dump($row);*/
             $key = $row['firstName'] . $row['lastName'] . $row['studentID'];
             $students[$key] = $row['studentID'];
-            /*var_dump($students);*/
         }
     }
 
@@ -114,9 +106,8 @@ function DatabaseUpload()
 
             $subjects = DATA['subjects'];
 
-            foreach ($record as $key => $student) {
-
-                $name = $record[$key][0] . $record[$key][1] . $index;
+            foreach ($record as $student) {
+                $name = $student[0] . $student[1] . $index;
                 $index++;
                 foreach ($subjects as $subject) {
                     if (!isset($student[$subject])) {
@@ -143,8 +134,7 @@ function DatabaseUpload()
         }
     }
 
-
-    /*unset($_SESSION['schoolbook']);*/
+    $mysqli->close();
     $_SESSION['popup_message'] = "<div class='popup'>Database uploaded!</div>";
     header("Location: ?");
     exit;

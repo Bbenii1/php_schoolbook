@@ -1,106 +1,49 @@
 <?php
 include("connect.php");
+include("db_display.php");
 
-function displayInTable($class, $classStudents, $grades, $studentAverages, $subjectAverages, $classAverage): void
+function ClassQuery($year, $class) : void
 {
-    echo "<table class='classTable'><tr><th>$class</th>";
+    if ($class != 'all') $classFilter = "c.class LIKE '%$class[0]%' AND"; else $classFilter = "";
 
-    foreach (DATA['subjects'] as $subject) {
-        echo "<td>" . $subject . "</td>";
-    }
-
-    echo "<td>Average</td></tr>";
-
-    //Display student grades and their averages
-    foreach ($classStudents as $student) {
-        echo "<tr><td>" . $student[1] . " " . $student[2] . "<span>" . ($student[3]) . "</span></td>";
-        foreach (DATA['subjects'] as $subject) {
-            $gradeFound = false;
-            foreach ($grades as $grade) {
-                if ($grade[0] == $student[0] && $grade[1] == $subject) {
-                    echo "<td>" . $grade[2] . "</td>";
-                    $gradeFound = true;
-                    break;
-                }
-            }
-            if (!$gradeFound) {
-                echo "<td>-</td>";
-            }
-        }
-
-        //Display student average
-        $studentAvg = "-";
-        foreach ($studentAverages as $avg) {
-            if ($avg[0] == $student[0]) {
-                $studentAvg = number_format($avg[1], 2);
-                break;
-            }
-        }
-        echo "<td>" . $studentAvg . "</td></tr>";
-    }
-
-    //Display subject averages in a separate row
-    echo "<tr><td></td>";
-    foreach (DATA['subjects'] as $subject) {
-        $subjectAvg = "-";
-        foreach ($subjectAverages as $avg) {
-            if ($avg[0] == $subject) {
-                $subjectAvg = number_format($avg[1], 2);
-                break;
-            }
-        }
-        echo "<td>" . $subjectAvg . "</td>";
-    }
-    echo "<td>$classAverage[0]</td></tr>";
-
-    echo "</table>";
-}
-
-function ClassQuery($year, $class) {
-    $sql = "SELECT s.studentID, s.firstName AS firstName, s.lastName AS lastName, s.gender AS gender, c.class AS class
+    /*name, class, gender*/
+    $studentSQL = "SELECT s.studentID, s.firstName AS firstName, s.lastName AS lastName, s.gender AS gender, c.class AS class
             FROM students s
             JOIN classes c ON c.classID = s.classID
-            WHERE c.class LIKE '$class' AND c.schoolYear = '$year'
+            WHERE $classFilter c.schoolYear = '$year'
             ORDER BY s.firstName, s.lastName DESC;";
 
-    $sql2 = "SELECT
-                s.studentID,
-                sub.subject,
-                GROUP_CONCAT(g.grade SEPARATOR ', ') AS grades
+    /*grades*/
+    $gradeSQL = "SELECT s.studentID, sub.subject, GROUP_CONCAT(g.grade SEPARATOR ', ') AS grades
              FROM grades g
              JOIN subjects sub ON sub.subjectID = g.subjectID
              JOIN students s ON s.studentID = g.studentID
              JOIN classes c ON c.classID = s.classID
-             WHERE c.class LIKE '$class' AND c.schoolYear = '$year'
+             WHERE $classFilter c.schoolYear = '$year'
              GROUP BY s.studentID, sub.subject
              ORDER BY s.firstName, s.lastName DESC;";
 
-    $sql_student_avg = "
-        SELECT 
-            s.studentID,
-            AVG(g.grade) AS student_avg
-        FROM grades g
-        JOIN students s ON s.studentID = g.studentID
-        JOIN classes c ON c.classID = s.classID
-        WHERE c.class LIKE '$class' AND c.schoolYear = '$year'
-        GROUP BY s.studentID
-        ORDER BY s.firstName, s.lastName DESC;
-    ";
+    /*student averages*/
+    $sqlStudentAvg = "SELECT s.studentID, AVG(g.grade) AS student_avg
+                        FROM grades g
+                        JOIN students s ON s.studentID = g.studentID
+                        JOIN classes c ON c.classID = s.classID
+                        WHERE $classFilter c.schoolYear = '$year'
+                        GROUP BY s.studentID
+                        ORDER BY s.firstName, s.lastName DESC;";
 
-    $sql_subject_avg = "
-        SELECT 
-            sub.subject,
-            AVG(g.grade) AS subject_avg
-        FROM grades g
-        JOIN subjects sub ON sub.subjectID = g.subjectID
-        JOIN students s ON s.studentID = g.studentID
-        JOIN classes c ON c.classID = s.classID
-        WHERE c.class LIKE '$class' AND c.schoolYear = '$year'
-        GROUP BY sub.subject
-        ORDER BY s.firstName, s.lastName DESC;
-    ";
+    /*subject averages*/
+    $sqlSubjectAvg = "SELECT sub.subject,AVG(g.grade) AS subject_avg
+                        FROM grades g
+                        JOIN subjects sub ON sub.subjectID = g.subjectID
+                        JOIN students s ON s.studentID = g.studentID
+                        JOIN classes c ON c.classID = s.classID
+                        WHERE $classFilter c.schoolYear = '$year'
+                        GROUP BY sub.subject
+                        ORDER BY s.firstName, s.lastName DESC;";
 
-    $sqlOverallClassAvg = "SELECT AVG(student_avg) AS overall_avg
+    /*class average*/
+    $sqlOverallClassAvg = "SELECT ROUND(AVG(student_avg), 2) AS overall_avg
             FROM (
                 SELECT 
                     s.studentID,
@@ -108,26 +51,26 @@ function ClassQuery($year, $class) {
                 FROM grades g
                 JOIN students s ON s.studentID = g.studentID
                 JOIN classes c ON c.classID = s.classID
-                WHERE c.class LIKE '$class' AND c.schoolYear = '$year'
+                WHERE $classFilter c.schoolYear = '$year'
                 GROUP BY s.studentID
             ) AS student_averages;";
 
-    $data1 = execSQL($sql);
-    $data2 = execSQL($sql2);
-    $studentAverages = execSQL($sql_student_avg);
-    $subjectAverages = execSQL($sql_subject_avg);
+    $students = execSQL($studentSQL);
+    $grades = execSQL($gradeSQL);
+    $studentAverages = execSQL($sqlStudentAvg);
+    $subjectAverages = execSQL($sqlSubjectAvg);
     $classAverage = execAssocSQL($sqlOverallClassAvg);
-    var_dump($classAverage);
-    if ($data1 === false || $data2 === false || $studentAverages === false || $subjectAverages === false) {
+
+    if ($students === false || $grades === false || $studentAverages === false || $subjectAverages === false) {
         header("Location: ?");
     } else {
-        displayInTable($class, $data1, $data2, $studentAverages, $subjectAverages, $classAverage);
+        displayInTable($class, $students, $grades, $studentAverages, $subjectAverages, $classAverage[0]);
     }
 }
 
-
-function getClassAverages() {
-    //osztályonkénti átlag minden tantárgyhoz
+function getClassAverages() : void
+{
+    /*class averages for every subject*/
     $sql = "SELECT c.class, sub.subject, ROUND(AVG(g.grade), 2) AS subjectAverage
             FROM grades g
             JOIN subjects sub ON sub.subjectID = g.subjectID
@@ -135,14 +78,14 @@ function getClassAverages() {
             JOIN classes c ON c.classID = s.classID
             GROUP BY c.class, sub.subject;";
 
-    //osztályonkénti átlag
+    /*class averages*/
     $sql2 = "SELECT c.class, ROUND(AVG(g.grade), 2) AS overallAverage
              FROM grades g
              JOIN students s ON s.studentID = g.studentID
              JOIN classes c ON c.classID = s.classID
              GROUP BY c.class;";
 
-    //tantárgyankénti átlag
+    /*subject averages*/
     $sql3 = "SELECT 
                 sub.subject AS subject,
                 ROUND(AVG(g.grade), 2) AS subjectAverage
@@ -157,91 +100,58 @@ function getClassAverages() {
     }
 }
 
-function displayClassAverages($classSubjectAverages, $overallAverage, $subjectAverages): void
+function getRanking($year, $class) : void
 {
-    echo "<table class='classTable'>";
-    echo "<tr><th>Class</th>";
+    if ($class != 'all') $classFilter = "c.class LIKE '%$class[0]%' AND"; else $classFilter = "";
 
-    foreach (DATA['subjects'] as $subject) {
-        echo "<td>" . $subject . "</td>";
-    }
-
-    echo "<td>Average</td></tr>";
-
-    foreach (DATA['classes'] as $class) {
-        echo "<tr><td>$class</td>";
-        foreach ($classSubjectAverages as $subjectAvg) {
-
-            foreach (DATA['subjects'] as $subject){
-                if ($subjectAvg['class'] == $class && $subjectAvg['subject'] == $subject){
-                    echo "<td>" . $subjectAvg['subjectAverage'] . "</td>";
-                }
-            }
-        }
-        foreach ($overallAverage as $avg) {
-            if ($avg['class'] == $class){
-                echo "<td>" . $avg['overallAverage'] . "</td>";
-            }
-        }
-        echo "</tr>";
-    }
-
-    echo "<tr><td></td>";
-    foreach (DATA['subjects'] as $subject) {
-        foreach ($subjectAverages as $avg) {
-            if ($avg['subject'] == $subject){
-                echo "<td>" . $avg['subjectAverage'] . "</td>";
-            }
-        }
-    }
-    echo "<td></td></tr></table>";
-}
-
-function getRanking(){
-    if ($_GET['class'] == 'all'){
-        $class = "%";
-    } else  $class = $_GET["class"];
+    /*students ranked by their averages*/
     $sql = "SELECT CONCAT(s.firstName,' ', s.lastName) AS name, sub.subject, ROUND(AVG(g.grade), 2) AS average
             FROM grades g
             JOIN subjects sub ON sub.subjectID = g.subjectID
             JOIN students s ON s.studentID = g.studentID
             JOIN classes c ON c.classID = s.classID
-            WHERE c.class LIKE '$class'
+            WHERE $classFilter c.schoolYear LIKE '$year[0]'
             GROUP BY s.studentID, sub.subject
             ORDER BY 2, 3 DESC;";
     displayRankings(execAssocSQL($sql));
 }
 
-function displayRankings($list) {
-    echo "<table class='rankingTable'>";
-    echo "<tr><th>Rank</th>";
-
-    foreach (DATA['subjects'] as $subject) {
-        echo "<th>" . $subject . "</th>";
-    }
-    echo "</tr>";
-
-    $rankings = [];
-    foreach ($list as $record) {
-        $rankings[$record['subject']][] = $record;
-    }
-
-    $maxRows = max(array_map('count', $rankings));
-    for ($i = 0; $i < $maxRows; $i++) {
-        echo "<tr><td>" . ($i + 1) . ".</td>";
-        foreach (DATA['subjects'] as $subject) {
-            if (isset($rankings[$subject][$i])) {
-                $record = $rankings[$subject][$i];
-                echo "<td>" . $record['name'] . " (" . $record['average'] . ")</td>";
-            } else {
-                echo "<td>-</td>";
-            }
-        }
-        echo "</tr>";
-    }
-    echo "</table>";
+function getTop10($year) : void
+{
+    /*top 10 students from a year*/
+    $sql = "SELECT CONCAT(s.firstName,' ', s.lastName) AS name, ROUND(AVG(g.grade), 2) AS average
+            FROM grades g
+            JOIN subjects sub ON sub.subjectID = g.subjectID
+            JOIN students s ON s.studentID = g.studentID
+            JOIN classes c ON c.classID = s.classID
+            WHERE c.schoolYear = '$year[0]'
+            GROUP BY s.studentID
+            ORDER BY 2 DESC
+            LIMIT 10;";
+    displayTop10(execAssocSQL($sql));
 }
 
-function getBestAndWorst(){
+function getHallOfFame() : void
+{
+    /*best class*/
+    $topClassSQL = "SELECT c.schoolYear, c.class, ROUND(AVG(g.grade), 2) AS avg
+             FROM grades g
+             JOIN students s ON s.studentID = g.studentID
+             JOIN classes c ON c.classID = s.classID
+             GROUP by c.classID, c.schoolYear
+             ORDER BY avg DESC
+             LIMIT 1;";
 
+    /*top 10 students overall*/
+    $top10StudentSQL = "SELECT c.schoolYear, c.class, CONCAT(s.firstName, ' ', s.lastName) AS name, ROUND(AVG(g.grade), 2) AS avg
+             FROM grades g
+             JOIN students s ON s.studentID = g.studentID
+             JOIN classes c ON c.classID = s.classID
+             GROUP by s.studentID, c.schoolYear
+             ORDER BY avg DESC
+             LIMIT 10;";
+
+    $bestClass = (execAssocSQL($topClassSQL)[0]);
+    $top10Student = (execAssocSQL($top10StudentSQL));
+    displayHallOfFame($bestClass, $top10Student);
 }

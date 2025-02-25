@@ -40,6 +40,11 @@ nav a, nav button {
     color: white;
     text-decoration: none;
 }
+nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
 
 .homeBtn {
     height: 24px;
@@ -62,6 +67,7 @@ button, input, select{
     color: white;
     display: inline-block;
     transition: .2s cubic-bezier(0.2, 0.8, 0.25, 1);
+    min-width: 100px;
 }
 
 select {
@@ -140,8 +146,8 @@ td span {
 
 .popup {
     position: fixed;
-    top: 20px;
-    right: 50px;
+    bottom: 20px;
+    right: 20px;
     padding: 15px 20px;
     background-color: #2b812f;
     color: white;
@@ -151,7 +157,9 @@ td span {
     opacity: 0;
     animation: showAndHide 5s ease forwards;
     z-index: 100;
+    text-align: center;
 }
+
 
 .popup.error {
     background-color: #dc3545;
@@ -171,11 +179,11 @@ td span {
     margin-left: calc(50vw - 200px);
 }
 
-.queryButton > a:last-child > button{
+.queryButton select:last-child{
     border-bottom-right-radius: 8px;
 }
 
-.queryButton > a:first-child > button{
+.queryButton select:first-child {
     border-bottom-left-radius: 8px;
 }
 
@@ -333,7 +341,7 @@ td span {
 @keyframes showAndHide {
     0% {
         opacity: 0;
-        transform: translateY(-20px); /* fade in */
+        transform: translateY(20px); /* fade in */
     }
     10% {
         opacity: 1;
@@ -345,7 +353,7 @@ td span {
     }
     100% {
         opacity: 0;
-        transform: translateY(-20px); /* fade out */
+        transform: translateY(20px); /* fade out */
         display: none;
     }
 }
