@@ -1,1 +1,1 @@
-# PHProjekt-I.-Osztalynaplo
+# PHProjekt I. Osztalynaplo
