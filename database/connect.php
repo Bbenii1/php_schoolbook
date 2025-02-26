@@ -17,7 +17,7 @@ function execSQL($sql) {
         $data = mysqli_fetch_all($mysqli->query($sql));
 
         if (empty($data)) {
-            $_SESSION['popup_message'] = "<div class='popup error'>Query error.</div>";
+            /*$_SESSION['popup_message'] = "<div class='popup error'>Query error.</div>";*/
             return false;
         }
         return $data;

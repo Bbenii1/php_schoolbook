@@ -40,6 +40,7 @@ nav a, nav button {
     color: white;
     text-decoration: none;
 }
+
 nav a {
     display: inline-flex;
     align-items: center;
@@ -52,6 +53,7 @@ nav a {
     margin: 13px;
     transition: .2s cubic-bezier(0.2, 0.8, 0.25, 1);
 }
+
 .homeBtn:hover {
     color: #9ec9d6;
     transform: scale(1.1);
@@ -77,10 +79,10 @@ select {
 }
 
 select option {
-    text-align: center; /* Center the option text */
+    text-align: center;
 }
 
-select option:not(:first-child):not(:last-child) {
+select option:not(:last-child) {
     text-transform: uppercase;
 }
 
@@ -90,10 +92,6 @@ select:hover{
 
 button:hover {
     background-color: #518094;
-}
-
-form {
-    display: inline-table;
 }
 
 table{
@@ -128,10 +126,6 @@ tr:nth-child(even) {
     background-color: #ECEFF2;
 }
 
-.osztaly {
-    text-transform: uppercase !important;
-}
-
 .classTable tr:hover {
     background-color: #A5D6A7;
 }
@@ -160,7 +154,6 @@ td span {
     text-align: center;
 }
 
-
 .popup.error {
     background-color: #dc3545;
 }
@@ -187,6 +180,10 @@ td span {
     border-bottom-left-radius: 8px;
 }
 
+.queryButton #class-select:not(:last-child){
+    text-transform: uppercase;
+}
+
 .querymenu a button{
     padding: 20px 30px;
     height: fit-content;
@@ -206,53 +203,19 @@ td span {
     border-bottom-right-radius: 8px;
 }
 
-.avgQueryTable th{
+.rankingTable tr th{
     text-transform: capitalize;
 }
 
-.avgQueryTable tr td:nth-child(1){
-    text-align: center;
-    text-transform: uppercase;
-}
-
-.avgQueryTable tr:not(:last-child):hover {
-    background-color: #A5D6A7;
-}
-
-.avgQueryTable tr:last-child td:not(:first-child),
-.avgQueryTable tr:not(:first-child) td:last-child{
-    color: #ff0000;
-}
-
-.subjectQueryTable tr td:first-child{
-    text-align: center;
-}
-.subjectQueryTable th {
-    text-transform: capitalize;
-}
-
-.subjectQueryTable th {
+.rankingTable tr > td:first-child, .rankingTable tr > th:first-child {
     width: fit-content;
-}
-
-.subjectQueryTable tr:nth-child(2),
-.subjectQueryTable tr:nth-child(3),
-.subjectQueryTable tr:nth-child(4){
-    background-color: rgba(155, 255, 110, 0.5);
-}
-
-.subjectQueryTable tr:nth-last-child(1),
-.subjectQueryTable tr:nth-last-child(2),
-.subjectQueryTable tr:nth-last-child(3){
-    background-color: rgba(255, 110, 110, 0.5);
-}
-
-.bestTable tr:hover {
-    background-color: #A5D6A7;
-}
-
-.bestTable tr td:first-child {
     text-align: center;
+}
+
+.topClassTable tr th:first-child,
+.topStudentsTable tr th:first-child,
+.top10Table tr th:first-child{
+    text-transform: capitalize;
 }
 
 .line-one, .line-two, .line-three {
@@ -264,6 +227,7 @@ td span {
     height: 30px;
     margin: 10px;
 }
+
 .burger-menu {
     display: flex;
     flex-direction: column;
@@ -286,13 +250,6 @@ td span {
     background-color: #9ec9d6;
 }
 
-/*.burger-menu:hover .line-one, .burger-menu:hover .line-three {
-    transform: translateX(3px);
-}
-.burger-menu:hover .line-two {
-    transform: translateX(-3px);
-}*/
-
 .dropdown {
     float: right;
     margin-left: auto;
@@ -307,7 +264,6 @@ td span {
     background-color: inherit;
     font-family: inherit;
 }
-
 
 .dropdown-content {
     display: none;
