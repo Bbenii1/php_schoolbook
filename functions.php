@@ -149,3 +149,12 @@ function SaveToFile(): void
     header("Location: index.php?status=success&file=$filename");
     exit;
 }
+
+function buildQuery($params) {
+    if (!isset($_GET['query'])) return '?' . http_build_query(array_merge($_GET, $params));
+    else return '?' . http_build_query(array_merge($params));
+}
+
+function buildQueryString($params) {
+    return '?' . http_build_query(array_merge($_GET, $params));
+}

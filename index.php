@@ -16,26 +16,20 @@ require_once "functions.php";
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zsírkréta</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
     <script src="script.js"></script>
 </head>
 <body>
     <nav>
-        <a href="?" class="homeBtn"><i class="fa fa-home" style="font-size:24px"></i></a>
+        <a href="?" class="homeBtn"><i class='bx bxs-home-alt-2'></i></a>
 
         <?php
         $currentYear = isset($_GET['year']) ? $_GET['year'] : '';
         $currentClass = isset($_GET['class']) ? $_GET['class'] : '';
 
         /*make redirect links*/
-        function buildQuery($params) {
-            if (!isset($_GET['query'])) return '?' . http_build_query(array_merge($_GET, $params));
-            else return '?' . http_build_query(array_merge($params));
-        }
 
-        function buildQueryString($params) {
-            return '?' . http_build_query(array_merge($_GET, $params));
-        }
 
         $dbempty = execSQL("SELECT * FROM classes;");
         if(empty(execSQL("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'schoolbook' AND TABLE_ROWS = 0;")) && empty($dbempty)) : ?>
@@ -100,6 +94,7 @@ require_once "functions.php";
                 <a href="?createDB">Create database</a>
                 <a href="?uploadDB">Upload tables</a>
                 <a href="?reset">Reset students</a>
+                <a href="admin.php">admin</a>
             </div>
         </div>
     </nav>
@@ -209,7 +204,8 @@ require_once "functions.php";
                     getHallOfFame();
                     break;
             };
-        }?>
+        }
+        ?>
     </div>
 </body>
 </html>

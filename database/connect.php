@@ -49,3 +49,9 @@ function execAssocSQL($query) {
 
     return $data;
 }
+
+function runQuery($sql) {
+    $mysqli = connect();
+    $mysqli->query($sql);
+    $mysqli->close();
+}
